@@ -58,23 +58,24 @@ actually works" below for why this is two checks instead of one.
 
 ## Project layout
 
+```text
 src/
-config.py Settings from .env
-logger.py Shared logging setup
-pdf_loader.py Download PDF, extract + clean text per page
-chunking.py Overlapping chunking with page-level metadata
-embeddings.py Pinecone-hosted embedding calls (+ retries)
-vectorstore.py Pinecone index lifecycle, upsert, query
-guardrails.py Input validation, prompt-injection heuristics,
-refusal detection, confidence scoring, output sanitization
-llm.py Groq wrapper: grounded generation + groundedness grading
-graph.py LangGraph pipeline wiring the pieces above
-ingest.py CLI: run the full ingestion pipeline
-api.py FastAPI app (/chat, /health)
-streamlit_app.py Alternative simple UI
-tests/ 33 tests: unit + pipeline (all mocked, no network needed)
-eval/ Evaluation question set + runner + real results
-scripts/ list_groq_models.py -- see Troubleshooting
+├── config.py
+├── logger.py
+├── pdf_loader.py
+├── chunking.py
+├── embeddings.py
+├── vectorstore.py
+├── guardrails.py
+├── llm.py
+├── graph.py
+├── ingest.py
+└── api.py
+
+streamlit_app.py
+tests/                 # 33 tests
+eval/                  # Evaluation dataset and runner
+scripts/               # Utility scripts
 
 
 ## Setup
