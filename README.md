@@ -297,6 +297,6 @@ check the last line of the output for `N passed`; it should say `33 passed`.
 
   ## Demo Video
 
-The demo shows a normal RAG query, an out-of-scope fallback, and prompt-injection protection.
+The demo shows a normal RAG query, an out-of-scope fallback.
 
 https://github.com/user-attachments/assets/974d2a9d-44ab-4962-8a3f-8a93062a88ec
