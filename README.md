@@ -13,29 +13,38 @@ can't answer and saying so.
 
 ## Architecture
 
+**Ingestion (run once via `python -m src.ingest`):**
+
 PDF (URL) → download → extract text per page → clean → chunk (overlapping)
-→ embed (Pinecone hosted inference) → upsert to Pinecone
-│
-User question → LangGraph pipeline:
-validate_input → retrieve (top-k) → relevance_gate
-│ │pass │fail
-│reject (invalid/injection) ▼ ▼
-└──────────────────────────► generate fallback
-│ │
-(refusal? groundedness gate?) │
-│ │
-└──► postprocess ◄┘
-│
-answer + sources + confidence
+→ embed each chunk (Pinecone hosted inference) → upsert to Pinecone
 
+**Query time (LangGraph pipeline):**
 
-`generate` isn't a single LLM call — it's three checks in sequence on the
-model's own output: (1) does the answer *read* like a refusal ("not
-mentioned in the document", etc.)? (2) if not, does a separate self-grading
-call say the answer is actually grounded in the retrieved chunks? Only if
-both checks pass does the answer go back as a confident, non-fallback
-response. See "How grounding actually works" below for why this is two
-checks instead of one.
+```mermaid
+flowchart TD
+    Q[User question] --> V[validate_input]
+    V -->|invalid or prompt injection| R[reject]
+    V -->|valid| RT[retrieve top-k chunks]
+    RT --> RG[relevance_gate]
+    RG -->|no relevant chunks| FB[fallback]
+    RG -->|relevant chunks found| GEN[generate answer]
+    GEN --> RF{answer reads as a refusal?}
+    RF -->|yes| FB
+    RF -->|no| GG[groundedness gate]
+    GG -->|below threshold| FB
+    GG -->|passes| OK[confident answer]
+    R --> PP[postprocess]
+    FB --> PP
+    OK --> PP
+    PP --> OUT[answer + sources + confidence]
+```
+
+`generate` isn't a single LLM call — it's the model's answer plus two checks
+on that answer: (1) does it *read* like a refusal ("not mentioned in the
+document", etc.)? (2) if not, does a separate self-grading call say it's
+actually grounded in the retrieved chunks? Only if both checks pass does the
+answer go back as a confident, non-fallback response. See "How grounding
+actually works" below for why this is two checks instead of one.
 
 **Why these specific choices, kept deliberately simple:**
 - **Embeddings via Pinecone's hosted Inference API** (`multilingual-e5-large`)
